@@ -1,6 +1,6 @@
 {
   "name": "react-native-nitro-media-metadata",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Module to retrieve metadata from a any media (image,video,audio) supports Expo and React Native with nitro modules",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
