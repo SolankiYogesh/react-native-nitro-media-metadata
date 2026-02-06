@@ -1,4 +1,4 @@
-# react-native-nitro-video-metadata
+# react-native-nitro-media-metadata
 
 A high-performance React Native library for extracting comprehensive video metadata across iOS and Android platforms. Built with [Nitro Modules](https://nitro.margelo.com/) for optimal performance.
 
@@ -16,7 +16,7 @@ A high-performance React Native library for extracting comprehensive video metad
 ## Installation
 
 ```sh
-npm install react-native-nitro-video-metadata react-native-nitro-modules
+npm install react-native-nitro-media-metadata react-native-nitro-modules
 ```
 
 > **Note:** `react-native-nitro-modules` is required as this library relies on [Nitro Modules](https://nitro.margelo.com/).
@@ -44,7 +44,7 @@ This library works with Expo, but requires [Expo Dev Client](https://docs.expo.d
 ### Basic Usage
 
 ```typescript
-import { getVideoInfoAsync, getAudioInfoAsync, getImageInfoAsync } from 'react-native-nitro-video-metadata';
+import { getVideoInfoAsync, getAudioInfoAsync, getImageInfoAsync } from 'react-native-nitro-media-metadata';
 
 // Get metadata from a local video file
 const videoInfo = await getVideoInfoAsync('file://path/to/video.mp4', {});
@@ -65,7 +65,7 @@ console.log('Image dimensions:', imageInfo.width, 'x', imageInfo.height);
 import React, { useState } from 'react';
 import { View, Text, Button } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { getVideoInfoAsync } from 'react-native-nitro-video-metadata';
+import { getVideoInfoAsync } from 'react-native-nitro-media-metadata';
 
 export default function VideoMetadataExample() {
   const [videoInfo, setVideoInfo] = useState(null);

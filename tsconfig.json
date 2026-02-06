@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-nitro-video-metadata": ["./src/index"]
+      "react-native-nitro-media-metadata": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

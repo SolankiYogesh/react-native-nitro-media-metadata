@@ -1,5 +1,5 @@
 {
-  "name": "react-native-nitro-video-metadata",
+  "name": "react-native-nitro-media-metadata",
   "version": "0.2.0",
   "description": "Module to retrieve metadata from a video supports Expo and React Native with nitro modules",
   "main": "./lib/module/index.js",
@@ -34,13 +34,13 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-nitro-video-metadata-example",
+    "example": "yarn workspace react-native-nitro-media-metadata-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
-    "nitrogen": "nitrogen && yarn workspace react-native-nitro-video-metadata-example pod ",
+    "nitrogen": "nitrogen && yarn workspace react-native-nitro-media-metadata-example pod ",
     "release": "release-it --only-version"
   },
   "keywords": [
@@ -50,14 +50,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SolankiYogesh/react-native-nitro-video-metadata.git"
+    "url": "git+https://github.com/SolankiYogesh/react-native-nitro-media-metadata.git"
   },
   "author": "Yogesh Solanki <solankiyogesh3500@gmail.com> (https://github.com/SolankiYogesh)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SolankiYogesh/react-native-nitro-video-metadata/issues"
+    "url": "https://github.com/SolankiYogesh/react-native-nitro-media-metadata/issues"
   },
-  "homepage": "https://github.com/SolankiYogesh/react-native-nitro-video-metadata#readme",
+  "homepage": "https://github.com/SolankiYogesh/react-native-nitro-media-metadata#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

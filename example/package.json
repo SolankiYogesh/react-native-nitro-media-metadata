@@ -1,5 +1,5 @@
 {
-  "name": "react-native-nitro-video-metadata-example",
+  "name": "react-native-nitro-media-metadata-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -16,7 +16,7 @@
     "react-native": "0.82.1",
     "react-native-image-picker": "^8.2.1",
     "react-native-nitro-modules": "^0.31.3",
-    "react-native-nitro-video-metadata": "workspace:^"
+    "react-native-nitro-media-metadata": "workspace:^"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

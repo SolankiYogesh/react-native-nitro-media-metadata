@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { getVideoInfoAsync } from 'react-native-nitro-video-metadata';
+import { getVideoInfoAsync } from 'react-native-nitro-media-metadata';
 
 export default function App() {
   const [info, setInfo] = useState<any>(null);

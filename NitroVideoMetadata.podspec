@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.authors      = package["author"]
 
   s.platforms    = { :ios => min_ios_version_supported }
-  s.source       = { :git => "https://github.com/SolankiYogesh/react-native-nitro-video-metadata.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/SolankiYogesh/react-native-nitro-media-metadata.git", :tag => "#{s.version}" }
 
 
   s.source_files = [
