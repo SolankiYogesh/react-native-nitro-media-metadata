@@ -1,4 +1,4 @@
-package com.margelo.nitro.nitrovideometadata
+package com.margelo.nitro.nitromediametadata
 
 import android.content.Context
 import android.graphics.BitmapFactory
@@ -15,7 +15,7 @@ data class ImageMetadata(
     val fileSize: Long?,
     val format: String,
     val orientation: String,
-    val exif: Map<String, Any>,
+    val exif: Map<String, String>,
     val location: VideoLocation?
 )
 
@@ -53,7 +53,7 @@ class ImageMetadataReader(private val context: Context) {
             val orientationInt = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
             val orientation = getOrientationString(orientationInt)
             
-            val exifMap = mutableMapOf<String, Any>()
+            val exifMap = mutableMapOf<String, String>()
             val tags = arrayOf(
                 ExifInterface.TAG_DATETIME,
                 ExifInterface.TAG_MAKE,

@@ -103,7 +103,7 @@ export type AudioInfoResult = {
   /**
    * Audio codec.
    */
-  codec: string;
+  audioCodec: string;
   /**
    * Audio sample rate in samples per second.
    */
@@ -154,34 +154,34 @@ export type ImageInfoResult = {
   /**
    * EXIF data (if available).
    */
-  exif?: Record<string, any>;
+  exif?: Record<string, string>;
   /**
    * Location where the image was taken (if available).
    */
   location?: VideoLocationType | null;
 };
 
-export type VideoInfoOptions = {
+export type MediaInfoOptions = {
   /**
    * In case `sourceFilename` is a remote URI, `headers` object is passed in a network request.
    */
   headers?: Record<string, string>;
 };
 
-export interface NitroVideoMetadata extends HybridObject<{
+export interface NitroMediaMetadata extends HybridObject<{
   ios: 'swift';
   android: 'kotlin';
 }> {
   getVideoInfoAsync(
     source: string,
-    options: VideoInfoOptions
+    options: MediaInfoOptions
   ): Promise<VideoInfoResult>;
   getAudioInfoAsync(
     source: string,
-    options: VideoInfoOptions
+    options: MediaInfoOptions
   ): Promise<AudioInfoResult>;
   getImageInfoAsync(
     source: string,
-    options: VideoInfoOptions
+    options: MediaInfoOptions
   ): Promise<ImageInfoResult>;
 }

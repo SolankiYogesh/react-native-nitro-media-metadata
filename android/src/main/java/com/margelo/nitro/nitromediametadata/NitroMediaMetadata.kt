@@ -1,4 +1,4 @@
-package com.margelo.nitro.nitrovideometadata
+package com.margelo.nitro.nitromediametadata
 
 import com.margelo.nitro.NitroModules
 import com.margelo.nitro.core.Promise
@@ -6,11 +6,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class NitroVideoMetadata: HybridNitroVideoMetadataSpec() {
+class NitroMediaMetadata: HybridNitroMediaMetadataSpec() {
 
   override fun getVideoInfoAsync(
     source: String,
-    options: VideoInfoOptions
+    options: MediaInfoOptions
   ): Promise<VideoInfoResult> {
     val promise = Promise<VideoInfoResult>()
 
@@ -69,7 +69,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec() {
 
   override fun getAudioInfoAsync(
     source: String,
-    options: VideoInfoOptions
+    options: MediaInfoOptions
   ): Promise<AudioInfoResult> {
     val promise = Promise<AudioInfoResult>()
 
@@ -87,7 +87,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec() {
           val result = AudioInfoResult(
             duration = meta.duration,
             fileSize = (meta.fileSize ?: 0L).toDouble(),
-            codec = meta.codec ?: "",
+            audioCodec = meta.codec ?: "",
             sampleRate = (meta.sampleRate ?: 0).toDouble(),
             channels = (meta.channels ?: 0).toDouble(),
             bitRate = (meta.bitRate ?: 0).toDouble(),
@@ -112,7 +112,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec() {
 
   override fun getImageInfoAsync(
     source: String,
-    options: VideoInfoOptions
+    options: MediaInfoOptions
   ): Promise<ImageInfoResult> {
     val promise = Promise<ImageInfoResult>()
 

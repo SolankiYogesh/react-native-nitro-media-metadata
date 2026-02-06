@@ -1,8 +1,8 @@
 //
 //  AudioMetadata.swift
-//  NitroVideoMetadata
+//  NitroMediaMetadata
 //
-//  Created by Antigravity on 06/02/26.
+//  Created by Yogesh on 06/02/26.
 //
 
 import Foundation
@@ -10,7 +10,11 @@ import AVFoundation
 
 public class AudioMetadata {
   public static func getAudioInfo(from sourceURL: URL, options: VideoMetadata.Options = VideoMetadata.Options()) throws -> [String: Any] {
-    let asset = AVURLAsset(url: sourceURL, options: ["AVURLAssetHTTPHeaderFieldsKey": options.headers])
+    var assetOptions: [String: Any] = [:]
+    if !sourceURL.isFileURL && sourceURL.scheme != "ph" {
+      assetOptions["AVURLAssetHTTPHeaderFieldsKey"] = options.headers
+    }
+    let asset = AVURLAsset(url: sourceURL, options: assetOptions)
     
     let semaphore = DispatchSemaphore(value: 0)
     asset.loadValuesAsynchronously(forKeys: ["tracks", "duration", "metadata"]) {
@@ -19,8 +23,9 @@ public class AudioMetadata {
     _ = semaphore.wait(timeout: .now() + 10)
 
     var error: NSError?
-    guard asset.statusOfValue(forKey: "duration", error: &error) == .loaded else {
-      throw error ?? NSError(domain: "AudioMetadata", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load audio duration"])
+    let durationStatus = asset.statusOfValue(forKey: "duration", error: &error)
+    if durationStatus != .loaded {
+      throw error ?? NSError(domain: "AudioMetadata", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load audio duration (Status: \(durationStatus.rawValue))"])
     }
 
     let duration = CMTimeGetSeconds(asset.duration)
@@ -42,12 +47,13 @@ public class AudioMetadata {
 
     if let audioTrack = asset.tracks(withMediaType: .audio).first {
         bitrate = audioTrack.estimatedDataRate
-        if let formatDesc = audioTrack.formatDescriptions.first as? CMAudioFormatDescription {
-            if let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDesc)?.pointee {
+        if let formatDesc = audioTrack.formatDescriptions.first {
+            let description = formatDesc as! CMFormatDescription
+            if let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(description)?.pointee {
                 sampleRate = asbd.mSampleRate
                 channels = Int(asbd.mChannelsPerFrame)
             }
-            let codecType = CMFormatDescriptionGetMediaSubType(formatDesc)
+            let codecType = CMFormatDescriptionGetMediaSubType(description)
             codec = fourCharCodeToString(fourCharCode: codecType)
         }
     }
@@ -81,12 +87,16 @@ public class AudioMetadata {
   }
 
   private static func fourCharCodeToString(fourCharCode: FourCharCode) -> String {
-    let chars: [Character] = [
-      Character(UnicodeScalar((fourCharCode >> 24) & 0xFF)!),
-      Character(UnicodeScalar((fourCharCode >> 16) & 0xFF)!),
-      Character(UnicodeScalar((fourCharCode >> 8) & 0xFF)!),
-      Character(UnicodeScalar(fourCharCode & 0xFF)!)
+    let bytes: [UInt8] = [
+      UInt8((fourCharCode >> 24) & 0xFF),
+      UInt8((fourCharCode >> 16) & 0xFF),
+      UInt8((fourCharCode >> 8) & 0xFF),
+      UInt8(fourCharCode & 0xFF)
     ]
-    return String(chars)
+    
+    return bytes.compactMap { byte in
+      let c = Character(UnicodeScalar(byte))
+      return c.isASCII ? String(c) : nil
+    }.joined().trimmingCharacters(in: .whitespaces)
   }
 }

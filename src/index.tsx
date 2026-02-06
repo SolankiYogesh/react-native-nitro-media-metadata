@@ -1,32 +1,41 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type {
-  NitroVideoMetadata,
-  VideoInfoOptions,
-  VideoInfoResult,
   AudioInfoResult,
   ImageInfoResult,
-} from './NitroVideoMetadata.nitro';
+  MediaInfoOptions,
+  NitroMediaMetadata,
+  VideoInfoResult,
+} from './NitroMediaMetadata.nitro';
 
-const NitroVideoMetadataHybridObject =
-  NitroModules.createHybridObject<NitroVideoMetadata>('NitroVideoMetadata');
+const NitroMediaMetadataHybridObject =
+  NitroModules.createHybridObject<NitroMediaMetadata>('NitroMediaMetadata');
 
 export function getVideoInfoAsync(
   source: string,
-  options: VideoInfoOptions
+  options?: MediaInfoOptions
 ): Promise<VideoInfoResult> {
-  return NitroVideoMetadataHybridObject.getVideoInfoAsync(source, options);
+  return NitroMediaMetadataHybridObject.getVideoInfoAsync(
+    source,
+    options ?? {}
+  );
 }
 
 export function getAudioInfoAsync(
   source: string,
-  options: VideoInfoOptions
+  options?: MediaInfoOptions
 ): Promise<AudioInfoResult> {
-  return NitroVideoMetadataHybridObject.getAudioInfoAsync(source, options);
+  return NitroMediaMetadataHybridObject.getAudioInfoAsync(
+    source,
+    options ?? {}
+  );
 }
 
 export function getImageInfoAsync(
   source: string,
-  options: VideoInfoOptions
+  options?: MediaInfoOptions
 ): Promise<ImageInfoResult> {
-  return NitroVideoMetadataHybridObject.getImageInfoAsync(source, options);
+  return NitroMediaMetadataHybridObject.getImageInfoAsync(
+    source,
+    options ?? {}
+  );
 }

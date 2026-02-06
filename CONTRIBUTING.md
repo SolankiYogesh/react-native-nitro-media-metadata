@@ -40,7 +40,7 @@ The [example app](/example/) demonstrates usage of the library. You need to run 
 
 It is configured to use the local version of the library, so any changes you make to the library's source code will be reflected in the example app. Changes to the library's JavaScript code will be reflected in the example app without a rebuild, but native code changes will require a rebuild of the example app.
 
-If you want to use Android Studio or Xcode to edit the native code, you can open the `example/android` or `example/ios` directories respectively in those editors. To edit the Objective-C or Swift files, open `example/ios/NitroVideoMetadataExample.xcworkspace` in Xcode and find the source files at `Pods > Development Pods > react-native-nitro-media-metadata`.
+If you want to use Android Studio or Xcode to edit the native code, you can open the `example/android` or `example/ios` directories respectively in those editors. To edit the Objective-C or Swift files, open `example/ios/NitroMediaMetadataExample.xcworkspace` in Xcode and find the source files at `Pods > Development Pods > react-native-nitro-media-metadata`.
 
 To edit the Java or Kotlin files, open `example/android` in Android studio and find the source files at `react-native-nitro-media-metadata` under `Android`.
 
@@ -67,15 +67,20 @@ yarn example ios
 To confirm that the app is running with the new architecture, you can check the Metro logs for a message like this:
 
 ```sh
-Running "NitroVideoMetadataExample" with {"fabric":true,"initialProps":{"concurrentRoot":true},"rootTag":1}
+Running "NitroMediaMetadataExample" with {"fabric":true,"initialProps":{"concurrentRoot":true},"rootTag":1}
 ```
 
 Note the `"fabric":true` and `"concurrentRoot":true` properties.
 
-Make sure your code passes TypeScript and ESLint. Run the following to verify:
+Make sure your code passes TypeScript:
 
 ```sh
 yarn typecheck
+```
+
+To check for linting errors, run the following:
+
+```sh
 yarn lint
 ```
 
@@ -91,6 +96,7 @@ Remember to add tests for your change if possible. Run the unit tests by:
 yarn test
 ```
 
+
 ### Commit message convention
 
 We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
@@ -104,13 +110,6 @@ We follow the [conventional commits specification](https://www.conventionalcommi
 
 Our pre-commit hooks verify that your commit message matches this format when committing.
 
-### Linting and tests
-
-[ESLint](https://eslint.org/), [Prettier](https://prettier.io/), [TypeScript](https://www.typescriptlang.org/)
-
-We use [TypeScript](https://www.typescriptlang.org/) for type checking, [ESLint](https://eslint.org/) with [Prettier](https://prettier.io/) for linting and formatting the code, and [Jest](https://jestjs.io/) for testing.
-
-Our pre-commit hooks verify that the linter and tests pass when committing.
 
 ### Publishing to npm
 
@@ -122,14 +121,15 @@ To publish new versions, run the following:
 yarn release
 ```
 
+
 ### Scripts
 
 The `package.json` file contains various scripts for common tasks:
 
 - `yarn`: setup project by installing dependencies.
 - `yarn typecheck`: type-check files with TypeScript.
-- `yarn lint`: lint files with ESLint.
-- `yarn test`: run unit tests with Jest.
+- `yarn lint`: lint files with [ESLint](https://eslint.org/).
+- `yarn test`: run unit tests with [Jest](https://jestjs.io/).
 - `yarn example start`: start the Metro server for the example app.
 - `yarn example android`: run the example app on Android.
 - `yarn example ios`: run the example app on iOS.

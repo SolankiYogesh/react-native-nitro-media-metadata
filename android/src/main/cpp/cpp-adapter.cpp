@@ -1,6 +1,6 @@
 #include <jni.h>
-#include "nitrovideometadataOnLoad.hpp"
+#include "nitromediametadataOnLoad.hpp"
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
-  return margelo::nitro::nitrovideometadata::initialize(vm);
+  return margelo::nitro::nitromediametadata::initialize(vm);
 }

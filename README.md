@@ -115,7 +115,7 @@ const videoInfo = await getVideoInfoAsync('https://example.com/video.mp4', {
 
 ## API Reference
 
-### `getVideoInfoAsync(source: string, options: VideoInfoOptions): Promise<VideoInfoResult>`
+### `getVideoInfoAsync(source: string, options: MediaInfoOptions): Promise<VideoInfoResult>`
 
 #### Parameters
 
@@ -124,7 +124,7 @@ const videoInfo = await getVideoInfoAsync('https://example.com/video.mp4', {
   - Remote URL: `https://example.com/video.mp4`
   - Asset URI from camera roll
 
-- `options` (VideoInfoOptions): Configuration options
+- `options` (MediaInfoOptions): Configuration options
   - `headers` (Record<string, string>): Optional headers for remote video requests
 
 #### Return Value (Video)
@@ -135,7 +135,7 @@ Returns a promise that resolves to a `VideoInfoResult` object with the following
 | -------------------- | --------------------------- | --------------------------------------------- | ---------------------------- |
 | `duration`           | `number`                    | Duration in seconds (float)                   | All                          |
 | `hasAudio`           | `boolean`                   | Whether video has audio track                 | All                          |
-| `isHDR`              | `boolean \| null`           | HDR video detection                           | iOS ≥14, Android             |
+| `isHDR`              | `boolean` or `null`           | HDR video detection                           | iOS ≥14, Android             |
 | `width`              | `number`                    | Video width in pixels                         | All                          |
 | `height`             | `number`                    | Video height in pixels                        | All                          |
 | `fps`                | `number`                    | Frame rate (frames per second)                | iOS, Android (except Safari) |
@@ -149,9 +149,9 @@ Returns a promise that resolves to a `VideoInfoResult` object with the following
 | `audioSampleRate`    | `number`                    | Audio sample rate (samples per second)        | All                          |
 | `audioChannels`      | `number`                    | Audio channel count                           | All                          |
 | `audioCodec`         | `string`                    | Audio codec                                   | All                          |
-| `location`           | `VideoLocationType \| null` | GPS location data                             | iOS, Android                 |
+| `location`           | `VideoLocationType` or `null` | GPS location data                             | iOS, Android                 |
 
-### `getAudioInfoAsync(source: string, options: VideoInfoOptions): Promise<AudioInfoResult>`
+### `getAudioInfoAsync(source: string, options: MediaInfoOptions): Promise<AudioInfoResult>`
 
 #### Return Value (Audio)
 
@@ -169,7 +169,7 @@ Returns a promise that resolves to an `AudioInfoResult` object:
 | `title`      | `string` | Title                                   | All              |
 | `album`      | `string` | Album name                              | All              |
 
-### `getImageInfoAsync(source: string, options: VideoInfoOptions): Promise<ImageInfoResult>`
+### `getImageInfoAsync(source: string, options: MediaInfoOptions): Promise<ImageInfoResult>`
 
 #### Return Value (Image)
 
@@ -183,7 +183,7 @@ Returns a promise that resolves to an `ImageInfoResult` object:
 | `format`      | `string`                    | Image format (jpeg, png, etc.)          | All              |
 | `orientation` | `string`                    | Image orientation                       | All              |
 | `exif`        | `Record<string, any>`       | EXIF data                               | All              |
-| `location`    | `VideoLocationType \| null` | GPS location data                       | All              |
+| `location`    | `VideoLocationType` or `null` | GPS location data                       | All              |
 
 #### VideoLocationType
 

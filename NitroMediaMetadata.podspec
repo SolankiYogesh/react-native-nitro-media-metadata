@@ -3,7 +3,7 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
-  s.name         = "NitroVideoMetadata"
+  s.name         = "NitroMediaMetadata"
   s.version      = package["version"]
   s.summary      = package["description"]
   s.homepage     = package["homepage"]
@@ -12,7 +12,6 @@ Pod::Spec.new do |s|
 
   s.platforms    = { :ios => min_ios_version_supported }
   s.source       = { :git => "https://github.com/SolankiYogesh/react-native-nitro-media-metadata.git", :tag => "#{s.version}" }
-
 
   s.source_files = [
     "ios/**/*.{swift}",
@@ -23,7 +22,7 @@ Pod::Spec.new do |s|
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
 
-  load 'nitrogen/generated/ios/NitroVideoMetadata+autolinking.rb'
+  load 'nitrogen/generated/ios/NitroMediaMetadata+autolinking.rb'
   add_nitrogen_files(s)
 
   install_modules_dependencies(s)

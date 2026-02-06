@@ -1,6 +1,6 @@
 //
 //  VideoMetadata.swift
-//  NitroVideoMetadata
+//  NitroMediaMetadata
 //
 //  Created by Yogesh Solanki on 29/10/25.
 //
@@ -19,7 +19,11 @@ public class VideoMetadata {
   }
 
   public static func getVideoInfo(from sourceURL: URL, options: Options = Options()) throws -> [String: Any] {
-    let asset = AVURLAsset(url: sourceURL, options: ["AVURLAssetHTTPHeaderFieldsKey": options.headers])
+    var assetOptions: [String: Any] = [:]
+    if !sourceURL.isFileURL && sourceURL.scheme != "ph" {
+      assetOptions["AVURLAssetHTTPHeaderFieldsKey"] = options.headers
+    }
+    let asset = AVURLAsset(url: sourceURL, options: assetOptions)
     
     let semaphore = DispatchSemaphore(value: 0)
     asset.loadValuesAsynchronously(forKeys: ["tracks", "duration"]) {
@@ -28,8 +32,9 @@ public class VideoMetadata {
     _ = semaphore.wait(timeout: .now() + 10)
 
     var error: NSError?
-    guard asset.statusOfValue(forKey: "tracks", error: &error) == .loaded else {
-      throw error ?? NSError(domain: "VideoMetadata", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load video tracks"])
+    let tracksStatus = asset.statusOfValue(forKey: "tracks", error: &error)
+    if tracksStatus != .loaded {
+      throw error ?? NSError(domain: "VideoMetadata", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load video tracks (Status: \(tracksStatus.rawValue))"])
     }
 
     let duration = CMTimeGetSeconds(asset.duration)
@@ -63,7 +68,8 @@ public class VideoMetadata {
       orientation = getOrientation(from: videoTrack)
       
       if let formatDesc = videoTrack.formatDescriptions.first {
-          let codecType = CMFormatDescriptionGetMediaSubType(formatDesc as! CMFormatDescription)
+          let description = formatDesc as! CMFormatDescription
+          let codecType = CMFormatDescriptionGetMediaSubType(description)
           codec = fourCharCodeToString(fourCharCode: codecType)
       }
 
@@ -73,13 +79,13 @@ public class VideoMetadata {
     }
 
     if let audioTrack = asset.tracks(withMediaType: .audio).first,
-       let formatDescriptions = audioTrack.formatDescriptions as? [CMAudioFormatDescription],
-       let firstFormatDescription = formatDescriptions.first {
-      if let audioStreamBasicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(firstFormatDescription)?.pointee {
+       let firstFormatDescription = audioTrack.formatDescriptions.first {
+      let description = firstFormatDescription as! CMFormatDescription
+      if let audioStreamBasicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(description)?.pointee {
         audioSampleRate = Int(audioStreamBasicDescription.mSampleRate)
         audioChannels = Int(audioStreamBasicDescription.mChannelsPerFrame)
       }
-      let codecType = CMFormatDescriptionGetMediaSubType(firstFormatDescription)
+      let codecType = CMFormatDescriptionGetMediaSubType(description)
       audioCodec = fourCharCodeToString(fourCharCode: codecType)
     }
 
@@ -146,12 +152,16 @@ public class VideoMetadata {
   }
   
   private static func fourCharCodeToString(fourCharCode: FourCharCode) -> String {
-    let chars: [Character] = [
-      Character(UnicodeScalar((fourCharCode >> 24) & 0xFF)!),
-      Character(UnicodeScalar((fourCharCode >> 16) & 0xFF)!),
-      Character(UnicodeScalar((fourCharCode >> 8) & 0xFF)!),
-      Character(UnicodeScalar(fourCharCode & 0xFF)!)
+    let bytes: [UInt8] = [
+      UInt8((fourCharCode >> 24) & 0xFF),
+      UInt8((fourCharCode >> 16) & 0xFF),
+      UInt8((fourCharCode >> 8) & 0xFF),
+      UInt8(fourCharCode & 0xFF)
     ]
-    return String(chars)
+    
+    return bytes.compactMap { byte in
+      let c = Character(UnicodeScalar(byte))
+      return c.isASCII ? String(c) : nil
+    }.joined().trimmingCharacters(in: .whitespaces)
   }
 }

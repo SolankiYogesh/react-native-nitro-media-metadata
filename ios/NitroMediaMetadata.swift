@@ -3,7 +3,7 @@ import AVFoundation
 import Photos
 import NitroModules
 
-struct VideoMetadataError: LocalizedError {
+struct MediaMetadataError: LocalizedError {
   let message: String
   var errorDescription: String? { message }
 }
@@ -16,20 +16,20 @@ func doubleValue(_ value: Any?) -> Double {
   return 0
 }
 
-class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
+class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
 
-  func getVideoInfoAsync(source: String, options: VideoInfoOptions) throws -> NitroModules.Promise<VideoInfoResult> {
+  func getVideoInfoAsync(source: String, options: MediaInfoOptions) throws -> NitroModules.Promise<VideoInfoResult> {
     let promise = NitroModules.Promise<VideoInfoResult>()
     let url = resolveURL(source)
 
     guard let url = url else {
-      promise.reject(withError: VideoMetadataError(message: "Invalid URL: \(source)"))
+      promise.reject(withError: MediaMetadataError(message: "Invalid URL: \(source)"))
       return promise
     }
     
-    resolveVideoURL(url) { resolvedURL in
+    resolveMediaURL(url) { resolvedURL in
       guard let videoURL = resolvedURL else {
-        promise.reject(withError: VideoMetadataError(message: "Failed to resolve video URI."))
+        promise.reject(withError: MediaMetadataError(message: "Failed to resolve video URI."))
         return
       }
 
@@ -39,7 +39,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
           let result = self.mapToVideoInfoResult(infoDict)
           promise.resolve(withResult: result)
         } catch {
-          promise.reject(withError: VideoMetadataError(message: "Failed to extract video info: \(error.localizedDescription)"))
+          promise.reject(withError: MediaMetadataError(message: "Failed to extract video info: \(error.localizedDescription)"))
         }
       }
     }
@@ -47,44 +47,58 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
     return promise
   }
 
-  func getAudioInfoAsync(source: String, options: VideoInfoOptions) throws -> Promise<AudioInfoResult> {
+  func getAudioInfoAsync(source: String, options: MediaInfoOptions) throws -> Promise<AudioInfoResult> {
     let promise = Promise<AudioInfoResult>()
     let url = resolveURL(source)
 
     guard let url = url else {
-      promise.reject(withError: VideoMetadataError(message: "Invalid URL: \(source)"))
+      promise.reject(withError: MediaMetadataError(message: "Invalid URL: \(source)"))
       return promise
     }
 
-    DispatchQueue.global(qos: .userInitiated).async {
-      do {
-        let infoDict = try AudioMetadata.getAudioInfo(from: url, options: VideoMetadata.Options(headers: options.headers ?? [:]))
-        let result = self.mapToAudioInfoResult(infoDict)
-        promise.resolve(withResult: result)
-      } catch {
-        promise.reject(withError: VideoMetadataError(message: "Failed to extract audio info: \(error.localizedDescription)"))
+    resolveMediaURL(url) { resolvedURL in
+      guard let audioURL = resolvedURL else {
+        promise.reject(withError: MediaMetadataError(message: "Failed to resolve audio URI."))
+        return
+      }
+
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          let infoDict = try AudioMetadata.getAudioInfo(from: audioURL, options: VideoMetadata.Options(headers: options.headers ?? [:]))
+          let result = self.mapToAudioInfoResult(infoDict)
+          promise.resolve(withResult: result)
+        } catch {
+          promise.reject(withError: MediaMetadataError(message: "Failed to extract audio info: \(error.localizedDescription)"))
+        }
       }
     }
     
     return promise
   }
 
-  func getImageInfoAsync(source: String, options: VideoInfoOptions) throws -> Promise<ImageInfoResult> {
+  func getImageInfoAsync(source: String, options: MediaInfoOptions) throws -> Promise<ImageInfoResult> {
     let promise = Promise<ImageInfoResult>()
     let url = resolveURL(source)
 
     guard let url = url else {
-      promise.reject(withError: VideoMetadataError(message: "Invalid URL: \(source)"))
+      promise.reject(withError: MediaMetadataError(message: "Invalid URL: \(source)"))
       return promise
     }
 
-    DispatchQueue.global(qos: .userInitiated).async {
-      do {
-        let infoDict = try ImageMetadata.getImageInfo(from: url)
-        let result = self.mapToImageInfoResult(infoDict)
-        promise.resolve(withResult: result)
-      } catch {
-        promise.reject(withError: VideoMetadataError(message: "Failed to extract image info: \(error.localizedDescription)"))
+    resolveMediaURL(url) { resolvedURL in
+      guard let imageURL = resolvedURL else {
+        promise.reject(withError: MediaMetadataError(message: "Failed to resolve image URI."))
+        return
+      }
+
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          let infoDict = try ImageMetadata.getImageInfo(from: imageURL)
+          let result = self.mapToImageInfoResult(infoDict)
+          promise.resolve(withResult: result)
+        } catch {
+          promise.reject(withError: MediaMetadataError(message: "Failed to extract image info: \(error.localizedDescription)"))
+        }
       }
     }
     
@@ -92,11 +106,20 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
   }
 
   private func resolveURL(_ source: String) -> URL? {
-    if source.starts(with: "file://") {
-      return URL(fileURLWithPath: source.replacingOccurrences(of: "file://", with: ""))
-    } else {
-      return URL(string: source)
+    if let url = URL(string: source), url.scheme != nil {
+      return url
     }
+    
+    if source.starts(with: "/") {
+      return URL(fileURLWithPath: source)
+    }
+    
+    if let encoded = source.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+       let url = URL(string: encoded), url.scheme != nil {
+      return url
+    }
+    
+    return nil
   }
 
   private func mapToVideoInfoResult(_ infoDict: [String: Any]) -> VideoInfoResult {
@@ -134,7 +157,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
     return AudioInfoResult(
       duration: doubleValue(infoDict["duration"]),
       fileSize: doubleValue(infoDict["fileSize"]),
-      codec: infoDict["codec"] as? String ?? "",
+      audioCodec: infoDict["codec"] as? String ?? "",
       sampleRate: doubleValue(infoDict["sampleRate"]),
       channels: doubleValue(infoDict["channels"]),
       bitRate: doubleValue(infoDict["bitRate"]),
@@ -151,7 +174,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
       fileSize: doubleValue(infoDict["fileSize"]),
       format: infoDict["format"] as? String ?? "",
       orientation: infoDict["orientation"] as? String ?? "",
-      exif: infoDict["exif"] as? [String: Any],
+      exif: infoDict["exif"] as? [String: String],
       location: {
         if let loc = infoDict["location"] as? [String: Double] {
           return VideoLocationType(
@@ -165,7 +188,7 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
     )
   }
 
-  private func resolveVideoURL(_ uri: URL, completion: @escaping (URL?) -> Void) {
+  private func resolveMediaURL(_ uri: URL, completion: @escaping (URL?) -> Void) {
     if uri.scheme == "ph" {
       let assetID = uri.absoluteString.replacingOccurrences(of: "ph://", with: "")
       let results = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
@@ -174,14 +197,22 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec {
         return
       }
 
-      let options = PHVideoRequestOptions()
-      options.isNetworkAccessAllowed = true
+      if phAsset.mediaType == .image {
+        let options = PHContentEditingInputRequestOptions()
+        options.isNetworkAccessAllowed = true
+        phAsset.requestContentEditingInput(with: options) { input, _ in
+          completion(input?.fullSizeImageURL)
+        }
+      } else {
+        let options = PHVideoRequestOptions()
+        options.isNetworkAccessAllowed = true
 
-      PHImageManager.default().requestAVAsset(forVideo: phAsset, options: options) { avAsset, _, _ in
-        if let urlAsset = avAsset as? AVURLAsset {
-          completion(urlAsset.url)
-        } else {
-          completion(nil)
+        PHImageManager.default().requestAVAsset(forVideo: phAsset, options: options) { avAsset, _, _ in
+          if let urlAsset = avAsset as? AVURLAsset {
+            completion(urlAsset.url)
+          } else {
+            completion(nil)
+          }
         }
       }
     } else {

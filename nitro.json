@@ -1,16 +1,16 @@
 {
-  "cxxNamespace": ["nitrovideometadata"],
+  "cxxNamespace": ["nitromediametadata"],
   "ios": {
-    "iosModuleName": "NitroVideoMetadata"
+    "iosModuleName": "NitroMediaMetadata"
   },
   "android": {
-    "androidNamespace": ["nitrovideometadata"],
-    "androidCxxLibName": "nitrovideometadata"
+    "androidNamespace": ["nitromediametadata"],
+    "androidCxxLibName": "nitromediametadata"
   },
   "autolinking": {
-    "NitroVideoMetadata": {
-      "swift": "NitroVideoMetadata",
-      "kotlin": "NitroVideoMetadata"
+    "NitroMediaMetadata": {
+      "swift": "NitroMediaMetadata",
+      "kotlin": "NitroMediaMetadata"
     }
   },
   "ignorePaths": ["node_modules"]

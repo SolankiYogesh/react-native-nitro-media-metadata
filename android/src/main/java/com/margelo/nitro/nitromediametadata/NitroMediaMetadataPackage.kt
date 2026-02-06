@@ -1,11 +1,11 @@
-package com.margelo.nitro.nitrovideometadata
+package com.margelo.nitro.nitromediametadata
 
 import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfoProvider
 
-class NitroVideoMetadataPackage : BaseReactPackage() {
+class NitroMediaMetadataPackage : BaseReactPackage() {
     override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
         return null
     }
@@ -16,7 +16,7 @@ class NitroVideoMetadataPackage : BaseReactPackage() {
 
     companion object {
         init {
-            System.loadLibrary("nitrovideometadata")
+            System.loadLibrary("nitromediametadata")
         }
     }
 }

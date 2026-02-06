@@ -1,8 +1,8 @@
 //
 //  ImageMetadata.swift
-//  NitroVideoMetadata
+//  NitroMediaMetadata
 //
-//  Created by Antigravity on 06/02/26.
+//  Created by Yogesh on 06/02/26.
 //
 
 import Foundation

@@ -1,4 +1,4 @@
-package com.margelo.nitro.nitrovideometadata
+package com.margelo.nitro.nitromediametadata
 
 import android.content.Context
 import android.media.MediaExtractor
