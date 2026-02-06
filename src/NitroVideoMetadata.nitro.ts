@@ -91,6 +91,76 @@ export type VideoInfoResult = {
   location: VideoLocationType | null;
 };
 
+export type AudioInfoResult = {
+  /**
+   * Duration of the audio in seconds (float).
+   */
+  duration: number;
+  /**
+   * File size of the audio in bytes. Works only for local files, returns 0 for remote files.
+   */
+  fileSize: number;
+  /**
+   * Audio codec.
+   */
+  codec: string;
+  /**
+   * Audio sample rate in samples per second.
+   */
+  sampleRate: number;
+  /**
+   * Audio channel count.
+   */
+  channels: number;
+  /**
+   * Bit rate in bits per second.
+   */
+  bitRate: number;
+  /**
+   * Artist name (if available).
+   */
+  artist?: string;
+  /**
+   * Title (if available).
+   */
+  title?: string;
+  /**
+   * Album name (if available).
+   */
+  album?: string;
+};
+
+export type ImageInfoResult = {
+  /**
+   * Width of the image in pixels.
+   */
+  width: number;
+  /**
+   * Height of the image in pixels.
+   */
+  height: number;
+  /**
+   * File size of the image in bytes. Works only for local files, returns 0 for remote files.
+   */
+  fileSize: number;
+  /**
+   * Image format (e.g. jpeg, png).
+   */
+  format: string;
+  /**
+   * Image orientation.
+   */
+  orientation: string;
+  /**
+   * EXIF data (if available).
+   */
+  exif?: Record<string, any>;
+  /**
+   * Location where the image was taken (if available).
+   */
+  location?: VideoLocationType | null;
+};
+
 export type VideoInfoOptions = {
   /**
    * In case `sourceFilename` is a remote URI, `headers` object is passed in a network request.
@@ -98,10 +168,20 @@ export type VideoInfoOptions = {
   headers?: Record<string, string>;
 };
 
-export interface NitroVideoMetadata
-  extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
+export interface NitroVideoMetadata extends HybridObject<{
+  ios: 'swift';
+  android: 'kotlin';
+}> {
   getVideoInfoAsync(
     source: string,
     options: VideoInfoOptions
   ): Promise<VideoInfoResult>;
+  getAudioInfoAsync(
+    source: string,
+    options: VideoInfoOptions
+  ): Promise<AudioInfoResult>;
+  getImageInfoAsync(
+    source: string,
+    options: VideoInfoOptions
+  ): Promise<ImageInfoResult>;
 }

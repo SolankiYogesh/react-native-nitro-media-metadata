@@ -66,4 +66,94 @@ class NitroVideoMetadata: HybridNitroVideoMetadataSpec() {
 
     return promise
   }
+
+  override fun getAudioInfoAsync(
+    source: String,
+    options: VideoInfoOptions
+  ): Promise<AudioInfoResult> {
+    val promise = Promise<AudioInfoResult>()
+
+    CoroutineScope(Dispatchers.IO).launch {
+      try {
+        NitroModules.applicationContext?.let { ctx ->
+          val meta = AudioMetadataReader(ctx).getAudioInfo(source, options.headers)
+          if (meta == null) {
+            CoroutineScope(Dispatchers.Main).launch {
+              promise.reject(Exception("Failed to read audio metadata"))
+            }
+            return@launch
+          }
+
+          val result = AudioInfoResult(
+            duration = meta.duration,
+            fileSize = (meta.fileSize ?: 0L).toDouble(),
+            codec = meta.codec ?: "",
+            sampleRate = (meta.sampleRate ?: 0).toDouble(),
+            channels = (meta.channels ?: 0).toDouble(),
+            bitRate = (meta.bitRate ?: 0).toDouble(),
+            artist = meta.artist,
+            title = meta.title,
+            album = meta.album
+          )
+
+          CoroutineScope(Dispatchers.Main).launch {
+            promise.resolve(result)
+          }
+        }
+      } catch (e: Exception) {
+        CoroutineScope(Dispatchers.Main).launch {
+          promise.reject(e)
+        }
+      }
+    }
+
+    return promise
+  }
+
+  override fun getImageInfoAsync(
+    source: String,
+    options: VideoInfoOptions
+  ): Promise<ImageInfoResult> {
+    val promise = Promise<ImageInfoResult>()
+
+    CoroutineScope(Dispatchers.IO).launch {
+      try {
+        NitroModules.applicationContext?.let { ctx ->
+          val meta = ImageMetadataReader(ctx).getImageInfo(source)
+          if (meta == null) {
+            CoroutineScope(Dispatchers.Main).launch {
+              promise.reject(Exception("Failed to read image metadata"))
+            }
+            return@launch
+          }
+
+          val result = ImageInfoResult(
+            width = meta.width.toDouble(),
+            height = meta.height.toDouble(),
+            fileSize = (meta.fileSize ?: 0L).toDouble(),
+            format = meta.format,
+            orientation = meta.orientation,
+            exif = meta.exif,
+            location = meta.location?.let {
+              VideoLocationType(
+                latitude = it.latitude,
+                longitude = it.longitude,
+                altitude = it.altitude
+              )
+            }
+          )
+
+          CoroutineScope(Dispatchers.Main).launch {
+            promise.resolve(result)
+          }
+        }
+      } catch (e: Exception) {
+        CoroutineScope(Dispatchers.Main).launch {
+          promise.reject(e)
+        }
+      }
+    }
+
+    return promise
+  }
 }

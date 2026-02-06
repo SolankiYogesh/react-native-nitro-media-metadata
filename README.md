@@ -5,11 +5,13 @@ A high-performance React Native library for extracting comprehensive video metad
 ## Features
 
 - 🎥 **Extract comprehensive video metadata** including duration, dimensions, codec, bitrate, and more
+- 🎵 **Audio metadata extraction** including duration, sample rate, channels, artist, and title
+- 🖼️ **Image metadata extraction** including dimensions, format, EXIF data, and orientation
 - 🌐 **Cross-platform support** for iOS and Android
 - ⚡ **High performance** using native modules via Nitro Modules
-- 📱 **Local and remote videos** support from device storage or URLs
+- 📱 **Local and remote files** support from device storage or URLs
 - 🎯 **TypeScript support** with full type definitions
-- 📊 **Advanced metadata** including HDR detection, orientation, location data, and audio properties
+- 📊 **Advanced metadata** including HDR detection, orientation, location data, and codec details
 
 ## Installation
 
@@ -42,14 +44,19 @@ This library works with Expo, but requires [Expo Dev Client](https://docs.expo.d
 ### Basic Usage
 
 ```typescript
-import { getVideoInfoAsync } from 'react-native-nitro-video-metadata';
+import { getVideoInfoAsync, getAudioInfoAsync, getImageInfoAsync } from 'react-native-nitro-video-metadata';
 
 // Get metadata from a local video file
 const videoInfo = await getVideoInfoAsync('file://path/to/video.mp4', {});
-
 console.log('Video duration:', videoInfo.duration);
-console.log('Video dimensions:', videoInfo.width, 'x', videoInfo.height);
-console.log('Video codec:', videoInfo.codec);
+
+// Get metadata from an audio file
+const audioInfo = await getAudioInfoAsync('file://path/to/audio.mp3', {});
+console.log('Audio artist:', audioInfo.artist);
+
+// Get metadata from an image file
+const imageInfo = await getImageInfoAsync('file://path/to/image.jpg', {});
+console.log('Image dimensions:', imageInfo.width, 'x', imageInfo.height);
 ```
 
 ### Example with React Component
@@ -120,7 +127,7 @@ const videoInfo = await getVideoInfoAsync('https://example.com/video.mp4', {
 - `options` (VideoInfoOptions): Configuration options
   - `headers` (Record<string, string>): Optional headers for remote video requests
 
-#### Return Value
+#### Return Value (Video)
 
 Returns a promise that resolves to a `VideoInfoResult` object with the following properties:
 
@@ -144,6 +151,40 @@ Returns a promise that resolves to a `VideoInfoResult` object with the following
 | `audioCodec`         | `string`                    | Audio codec                                   | All                          |
 | `location`           | `VideoLocationType \| null` | GPS location data                             | iOS, Android                 |
 
+### `getAudioInfoAsync(source: string, options: VideoInfoOptions): Promise<AudioInfoResult>`
+
+#### Return Value (Audio)
+
+Returns a promise that resolves to an `AudioInfoResult` object:
+
+| Property     | Type     | Description                             | Platform Support |
+| ------------ | -------- | --------------------------------------- | ---------------- |
+| `duration`   | `number` | Duration in seconds (float)             | All              |
+| `fileSize`   | `number` | File size in bytes                      | All              |
+| `codec`      | `string` | Audio codec (aac, mp3, etc.)            | All              |
+| `sampleRate` | `number` | Audio sample rate (samples per second)  | All              |
+| `channels`   | `number` | Audio channel count                     | All              |
+| `bitRate`    | `number` | Bit rate in bits per second             | All              |
+| `artist`     | `string` | Artist name                             | All              |
+| `title`      | `string` | Title                                   | All              |
+| `album`      | `string` | Album name                              | All              |
+
+### `getImageInfoAsync(source: string, options: VideoInfoOptions): Promise<ImageInfoResult>`
+
+#### Return Value (Image)
+
+Returns a promise that resolves to an `ImageInfoResult` object:
+
+| Property      | Type                        | Description                             | Platform Support |
+| ------------- | --------------------------- | --------------------------------------- | ---------------- |
+| `width`       | `number`                    | Image width in pixels                   | All              |
+| `height`      | `number`                    | Image height in pixels                  | All              |
+| `fileSize`    | `number`                    | File size in bytes                      | All              |
+| `format`      | `string`                    | Image format (jpeg, png, etc.)          | All              |
+| `orientation` | `string`                    | Image orientation                       | All              |
+| `exif`        | `Record<string, any>`       | EXIF data                               | All              |
+| `location`    | `VideoLocationType \| null` | GPS location data                       | All              |
+
 #### VideoLocationType
 
 ```typescript
@@ -156,13 +197,13 @@ type VideoLocationType = {
 
 ## Platform-Specific Notes
 
-### iOS
+### iOS Notes
 
 - Full metadata support including HDR detection (iOS 14+)
 - Location data extraction from video metadata
 - Excellent codec and format support
 
-### Android
+### Android Notes
 
 - Comprehensive metadata extraction
 - HDR video detection support

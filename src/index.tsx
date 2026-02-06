@@ -3,6 +3,8 @@ import type {
   NitroVideoMetadata,
   VideoInfoOptions,
   VideoInfoResult,
+  AudioInfoResult,
+  ImageInfoResult,
 } from './NitroVideoMetadata.nitro';
 
 const NitroVideoMetadataHybridObject =
@@ -13,4 +15,18 @@ export function getVideoInfoAsync(
   options: VideoInfoOptions
 ): Promise<VideoInfoResult> {
   return NitroVideoMetadataHybridObject.getVideoInfoAsync(source, options);
+}
+
+export function getAudioInfoAsync(
+  source: string,
+  options: VideoInfoOptions
+): Promise<AudioInfoResult> {
+  return NitroVideoMetadataHybridObject.getAudioInfoAsync(source, options);
+}
+
+export function getImageInfoAsync(
+  source: string,
+  options: VideoInfoOptions
+): Promise<ImageInfoResult> {
+  return NitroVideoMetadataHybridObject.getImageInfoAsync(source, options);
 }
