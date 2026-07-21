@@ -5,8 +5,9 @@ A high-performance React Native library for extracting comprehensive video metad
 ## Features
 
 - 🎥 **Extract comprehensive video metadata** including duration, dimensions, codec, bitrate, and more
-- 🎵 **Audio metadata extraction** including duration, sample rate, channels, artist, and title
-- 🖼️ **Image metadata extraction** including dimensions, format, EXIF data, and orientation
+- 🖼️ **Video thumbnail extraction** as a base64-encoded JPEG data URI
+- 🎵 **Audio metadata extraction** including duration, sample rate, channels, artist, title, and embedded cover art
+- 🖼️ **Image metadata extraction** including dimensions, format (detected from content, not file extension), EXIF data, and orientation
 - 🌐 **Cross-platform support** for iOS and Android
 - ⚡ **High performance** using native modules via Nitro Modules
 - 📱 **Local and remote files** support from device storage or URLs
@@ -142,8 +143,8 @@ Returns a promise that resolves to a `VideoInfoResult` object with the following
 | `bitRate`            | `number`                    | Bit rate in bits per second                   | All                          |
 | `fileSize`           | `number`                    | File size in bytes (0 for remote files)       | All                          |
 | `codec`              | `string`                    | Video codec                                   | All                          |
-| `orientation`        | `string`                    | Video orientation (Portrait, Landscape, etc.) | All                          |
-| `naturalOrientation` | `string`                    | Natural orientation without rotation          | All                          |
+| `orientation`        | `VideoOrientation`          | Video orientation: `'Portrait'` \| `'PortraitUpsideDown'` \| `'LandscapeLeft'` \| `'LandscapeRight'` \| `'Unknown'` | All |
+| `naturalOrientation` | `NaturalOrientation`        | Natural orientation without rotation: `'Portrait'` \| `'Landscape'` | All   |
 | `aspectRatio`        | `number`                    | Aspect ratio                                  | All                          |
 | `is16_9`             | `boolean`                   | Whether video is 16:9 aspect ratio            | All                          |
 | `audioSampleRate`    | `number`                    | Audio sample rate (samples per second)        | All                          |
@@ -165,9 +166,13 @@ Returns a promise that resolves to an `AudioInfoResult` object:
 | `sampleRate` | `number` | Audio sample rate (samples per second)  | All              |
 | `channels`   | `number` | Audio channel count                     | All              |
 | `bitRate`    | `number` | Bit rate in bits per second             | All              |
-| `artist`     | `string` | Artist name                             | All              |
-| `title`      | `string` | Title                                   | All              |
-| `album`      | `string` | Album name                              | All              |
+| `artist`     | `string` or `undefined` | Artist name (omitted if not present in the file) | All |
+| `title`      | `string` or `undefined` | Title (omitted if not present in the file)       | All |
+| `album`      | `string` or `undefined` | Album name (omitted if not present in the file)  | All |
+| `coverArt`   | `string` or `undefined` | Embedded cover art / album artwork, as a base64 data URI (e.g. `data:image/jpeg;base64,...`), if present | All |
+
+> **Note:** `artist`, `title`, `album` and `coverArt` are genuinely optional - if the file has no
+> such metadata, the property is `undefined` (not an empty string) on both platforms.
 
 ### `getImageInfoAsync(source: string, options: MediaInfoOptions): Promise<ImageInfoResult>`
 
@@ -180,10 +185,24 @@ Returns a promise that resolves to an `ImageInfoResult` object:
 | `width`       | `number`                    | Image width in pixels                   | All              |
 | `height`      | `number`                    | Image height in pixels                  | All              |
 | `fileSize`    | `number`                    | File size in bytes                      | All              |
-| `format`      | `string`                    | Image format (jpeg, png, etc.)          | All              |
-| `orientation` | `string`                    | Image orientation                       | All              |
-| `exif`        | `Record<string, any>`       | EXIF data                               | All              |
+| `format`      | `string`                    | Image format, detected from the actual decoded content (e.g. `jpeg`, `png`, `heic`) - not the file extension, so it's also correct for extensionless/`ph://` sources | All |
+| `orientation` | `ImageOrientation`          | Image orientation, derived from the effective (post-rotation) width/height: `'Landscape'` \| `'Portrait'` \| `'Square'` | All |
+| `exif`        | `Record<string, string>` or `undefined` | EXIF data (omitted if unavailable)     | All              |
 | `location`    | `VideoLocationType` or `null` | GPS location data                       | All              |
+
+### `getVideoThumbnailAsync(source: string, options: VideoThumbnailOptions): Promise<string | null>`
+
+Extracts a single representative video frame as a base64-encoded JPEG data URI (e.g.
+`data:image/jpeg;base64,...`), or `null` if a frame could not be extracted.
+
+```typescript
+const thumbnail = await getVideoThumbnailAsync('file://path/to/video.mp4', {
+  timeMs: 1000, // grab the frame at 1s; defaults to the first frame (0ms)
+});
+```
+
+`VideoThumbnailOptions` extends `MediaInfoOptions` with an optional `timeMs` (milliseconds)
+specifying which frame to extract.
 
 #### VideoLocationType
 
@@ -312,6 +331,16 @@ Enable debug logging to see detailed information:
 const videoInfo = await getVideoInfoAsync(videoUri, {});
 console.log('Video metadata:', JSON.stringify(videoInfo, null, 2));
 ```
+
+## Roadmap / Known Limitations
+
+- **Metadata writing/stripping** (e.g. scrubbing GPS EXIF data before upload) is not supported -
+  this library is strictly read-only.
+- **Batch reads** (multiple sources in a single call) are not supported - call the relevant
+  `get*InfoAsync` function once per source.
+- **WebP/AVIF/RAW image formats**: decoding relies on the underlying platform's native image
+  APIs (`BitmapFactory`/`ImageIO`), so support depends on OS version. Format detection itself
+  (see `format` above) works for any format the OS can decode.
 
 ## Contributing
 
