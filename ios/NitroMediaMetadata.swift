@@ -105,6 +105,38 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
     return promise
   }
 
+  func getVideoThumbnailAsync(source: String, options: VideoThumbnailOptions) throws -> Promise<String?> {
+    let promise = Promise<String?>()
+    let url = resolveURL(source)
+
+    guard let url = url else {
+      promise.reject(withError: MediaMetadataError(message: "Invalid URL: \(source)"))
+      return promise
+    }
+
+    resolveMediaURL(url) { resolvedURL in
+      guard let videoURL = resolvedURL else {
+        promise.reject(withError: MediaMetadataError(message: "Failed to resolve video URI."))
+        return
+      }
+
+      DispatchQueue.global(qos: .userInitiated).async {
+        do {
+          let thumbnail = try VideoMetadata.getVideoThumbnail(
+            from: videoURL,
+            options: VideoMetadata.Options(headers: options.headers ?? [:]),
+            timeMs: doubleValue(options.timeMs)
+          )
+          promise.resolve(withResult: thumbnail)
+        } catch {
+          promise.reject(withError: MediaMetadataError(message: "Failed to extract video thumbnail: \(error.localizedDescription)"))
+        }
+      }
+    }
+
+    return promise
+  }
+
   private func resolveURL(_ source: String) -> URL? {
     if let url = URL(string: source), url.scheme != nil {
       return url
@@ -133,8 +165,8 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
       bitRate: doubleValue(infoDict["bitrate"]),
       fileSize: doubleValue(infoDict["fileSize"]),
       codec: infoDict["codec"] as? String ?? "",
-      orientation: infoDict["orientation"] as? String ?? "",
-      naturalOrientation: infoDict["naturalOrientation"] as? String ?? "",
+      orientation: VideoOrientation(fromString: infoDict["orientation"] as? String ?? "") ?? .unknown,
+      naturalOrientation: NaturalOrientation(fromString: infoDict["naturalOrientation"] as? String ?? "") ?? .landscape,
       aspectRatio: doubleValue(infoDict["aspectRatio"]),
       is16_9: infoDict["is16_9"] as? Bool ?? false,
       audioSampleRate: doubleValue(infoDict["audioSampleRate"]),
@@ -163,7 +195,8 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
       bitRate: doubleValue(infoDict["bitRate"]),
       artist: infoDict["artist"] as? String,
       title: infoDict["title"] as? String,
-      album: infoDict["album"] as? String
+      album: infoDict["album"] as? String,
+      coverArt: infoDict["coverArt"] as? String
     )
   }
 
@@ -173,7 +206,7 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
       height: doubleValue(infoDict["height"]),
       fileSize: doubleValue(infoDict["fileSize"]),
       format: infoDict["format"] as? String ?? "",
-      orientation: infoDict["orientation"] as? String ?? "",
+      orientation: ImageOrientation(fromString: infoDict["orientation"] as? String ?? "") ?? .square,
       exif: infoDict["exif"] as? [String: String],
       location: {
         if let loc = infoDict["location"] as? [String: Double] {

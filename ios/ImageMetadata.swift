@@ -22,17 +22,21 @@ public class ImageMetadata {
         let width = properties[kCGImagePropertyPixelWidth as String] as? Int ?? 0
         let height = properties[kCGImagePropertyPixelHeight as String] as? Int ?? 0
         let orientationValue = properties[kCGImagePropertyOrientation as String] as? Int ?? 1
-        let orientation = getOrientationString(from: orientationValue)
-        
+        let orientation = MediaMetadataUtils.imageOrientationString(rawWidth: width, rawHeight: height, exifOrientation: orientationValue)
+
         var fileSize: Int64 = 0
         if sourceURL.isFileURL,
            let fileAttributes = try? FileManager.default.attributesOfItem(atPath: sourceURL.path),
            let size = fileAttributes[.size] as? NSNumber {
             fileSize = size.int64Value
         }
-        
-        let format = sourceURL.pathExtension.lowercased()
-        
+
+        // Derive the format from the actual decoded image content (via ImageIO's UTI),
+        // not the source URL's file extension - the extension is wrong/missing for `ph://`
+        // photo-library assets and other extensionless URLs, matching Android's
+        // `BitmapFactory.Options.outMimeType`-based detection.
+        let format = MediaMetadataUtils.imageFormat(from: source)
+
         var exif: [String: Any] = [:]
         if let exifDict = properties[kCGImagePropertyExifDictionary as String] as? [String: Any] {
             exif = exifDict
@@ -52,16 +56,6 @@ public class ImageMetadata {
             "exif": exif,
             "location": location as Any
         ]
-    }
-    
-    private static func getOrientationString(from value: Int) -> String {
-        switch value {
-        case 1: return "Portrait"
-        case 3: return "PortraitUpsideDown"
-        case 6: return "LandscapeRight"
-        case 8: return "LandscapeLeft"
-        default: return "Portrait"
-        }
     }
     
     private static func extractGPSData(from gpsDict: [String: Any]) -> [String: Double]? {

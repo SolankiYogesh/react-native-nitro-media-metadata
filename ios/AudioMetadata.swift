@@ -41,9 +41,12 @@ public class AudioMetadata {
     var sampleRate: Double = 0
     var channels: Int = 0
     var codec = ""
-    var artist = ""
-    var title = ""
-    var album = ""
+    // Missing artist/title/album/coverArt are left `nil` (not ""), matching Android's
+    // `undefined`/null for these genuinely-optional fields.
+    var artist: String? = nil
+    var title: String? = nil
+    var album: String? = nil
+    var coverArt: String? = nil
 
     if let audioTrack = asset.tracks(withMediaType: .audio).first {
         bitrate = audioTrack.estimatedDataRate
@@ -54,20 +57,24 @@ public class AudioMetadata {
                 channels = Int(asbd.mChannelsPerFrame)
             }
             let codecType = CMFormatDescriptionGetMediaSubType(description)
-            codec = fourCharCodeToString(fourCharCode: codecType)
+            codec = MediaMetadataUtils.fourCharCodeToString(fourCharCode: codecType)
         }
     }
 
-    // Extract metadata (Artist, Title, Album)
+    // Extract metadata (Artist, Title, Album, embedded cover art)
     for item in asset.metadata {
-        guard let key = item.commonKey?.rawValue, let value = item.value else { continue }
+        guard let key = item.commonKey?.rawValue else { continue }
         switch key {
         case AVMetadataKey.commonKeyArtist.rawValue:
-            artist = value as? String ?? ""
+            if let str = item.value as? String, !str.isEmpty { artist = str }
         case AVMetadataKey.commonKeyTitle.rawValue:
-            title = value as? String ?? ""
+            if let str = item.value as? String, !str.isEmpty { title = str }
         case AVMetadataKey.commonKeyAlbumName.rawValue:
-            album = value as? String ?? ""
+            if let str = item.value as? String, !str.isEmpty { album = str }
+        case AVMetadataKey.commonKeyArtwork.rawValue:
+            if let data = item.dataValue, !data.isEmpty {
+                coverArt = MediaMetadataUtils.dataURI(from: data)
+            }
         default:
             break
         }
@@ -80,23 +87,10 @@ public class AudioMetadata {
       "sampleRate": sampleRate,
       "channels": channels,
       "bitRate": bitrate,
-      "artist": artist,
-      "title": title,
-      "album": album
+      "artist": artist as Any,
+      "title": title as Any,
+      "album": album as Any,
+      "coverArt": coverArt as Any
     ]
-  }
-
-  private static func fourCharCodeToString(fourCharCode: FourCharCode) -> String {
-    let bytes: [UInt8] = [
-      UInt8((fourCharCode >> 24) & 0xFF),
-      UInt8((fourCharCode >> 16) & 0xFF),
-      UInt8((fourCharCode >> 8) & 0xFF),
-      UInt8(fourCharCode & 0xFF)
-    ]
-    
-    return bytes.compactMap { byte in
-      let c = Character(UnicodeScalar(byte))
-      return c.isASCII ? String(c) : nil
-    }.joined().trimmingCharacters(in: .whitespaces)
   }
 }

@@ -8,6 +8,7 @@
 import Foundation
 import AVFoundation
 import CoreMedia
+import UIKit
 
 public class VideoMetadata {
   
@@ -70,7 +71,7 @@ public class VideoMetadata {
       if let formatDesc = videoTrack.formatDescriptions.first {
           let description = formatDesc as! CMFormatDescription
           let codecType = CMFormatDescriptionGetMediaSubType(description)
-          codec = fourCharCodeToString(fourCharCode: codecType)
+          codec = MediaMetadataUtils.fourCharCodeToString(fourCharCode: codecType)
       }
 
       if #available(iOS 14.0, *) {
@@ -86,7 +87,7 @@ public class VideoMetadata {
         audioChannels = Int(audioStreamBasicDescription.mChannelsPerFrame)
       }
       let codecType = CMFormatDescriptionGetMediaSubType(description)
-      audioCodec = fourCharCodeToString(fourCharCode: codecType)
+      audioCodec = MediaMetadataUtils.fourCharCodeToString(fourCharCode: codecType)
     }
 
     if let gpsData = extractGPSData(from: asset.metadata) {
@@ -150,18 +151,28 @@ public class VideoMetadata {
     if coords.count > 2 { result["altitude"] = coords[2] }
     return result
   }
-  
-  private static func fourCharCodeToString(fourCharCode: FourCharCode) -> String {
-    let bytes: [UInt8] = [
-      UInt8((fourCharCode >> 24) & 0xFF),
-      UInt8((fourCharCode >> 16) & 0xFF),
-      UInt8((fourCharCode >> 8) & 0xFF),
-      UInt8(fourCharCode & 0xFF)
-    ]
-    
-    return bytes.compactMap { byte in
-      let c = Character(UnicodeScalar(byte))
-      return c.isASCII ? String(c) : nil
-    }.joined().trimmingCharacters(in: .whitespaces)
+
+  /// Extracts a single representative video frame as a base64-encoded JPEG data URI.
+  /// - Parameter timeMs: Time position (milliseconds) to grab the frame from. Defaults to the first frame.
+  public static func getVideoThumbnail(from sourceURL: URL, options: Options = Options(), timeMs: Double = 0) throws -> String? {
+    var assetOptions: [String: Any] = [:]
+    if !sourceURL.isFileURL && sourceURL.scheme != "ph" {
+      assetOptions["AVURLAssetHTTPHeaderFieldsKey"] = options.headers
+    }
+    let asset = AVURLAsset(url: sourceURL, options: assetOptions)
+
+    let generator = AVAssetImageGenerator(asset: asset)
+    generator.appliesPreferredTrackTransform = true
+
+    let time = CMTime(seconds: timeMs / 1000.0, preferredTimescale: 600)
+
+    do {
+      let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+      let uiImage = UIImage(cgImage: cgImage)
+      guard let jpegData = uiImage.jpegData(compressionQuality: 0.9) else { return nil }
+      return MediaMetadataUtils.dataURI(from: jpegData, mimeType: "image/jpeg")
+    } catch {
+      return nil
+    }
   }
 }
