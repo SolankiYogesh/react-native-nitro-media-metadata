@@ -19,7 +19,8 @@ data class AudioMetadata(
     val bitRate: Int?,
     val artist: String?,
     val title: String?,
-    val album: String?
+    val album: String?,
+    val coverArt: String?
 )
 
 class AudioMetadataReader(private val context: Context) {
@@ -55,6 +56,7 @@ class AudioMetadataReader(private val context: Context) {
             val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
             val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
             val album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
+            val coverArt = retriever.embeddedPicture?.let { MediaMetadataUtils.bytesToDataUri(it) }
 
             var channels: Int? = null
             var sampleRate: Int? = null
@@ -66,13 +68,13 @@ class AudioMetadataReader(private val context: Context) {
                 if (mimeType.startsWith("audio/")) {
                     channels = try { format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) } catch (_: Exception) { null }
                     sampleRate = try { format.getInteger(MediaFormat.KEY_SAMPLE_RATE) } catch (_: Exception) { null }
-                    codec = mapMimeTypeToCodecName(mimeType)
+                    codec = MediaMetadataUtils.mapMimeTypeToCodecName(mimeType)
                     break
                 }
             }
 
             return AudioMetadata(
-                duration, fileSize, codec, sampleRate, channels, bitRate, artist, title, album
+                duration, fileSize, codec, sampleRate, channels, bitRate, artist, title, album, coverArt
             )
         } catch (e: Exception) {
             return null
@@ -80,14 +82,5 @@ class AudioMetadataReader(private val context: Context) {
             retriever.release()
             extractor.release()
         }
-    }
-
-    private fun mapMimeTypeToCodecName(mime: String): String = when {
-        mime.contains("mp4a-latm") -> "aac"
-        mime.contains("ac3") -> "ac3"
-        mime.contains("opus") -> "opus"
-        mime.contains("vorbis") -> "vorbis"
-        mime.contains("flac") -> "flac"
-        else -> mime.substringAfter("audio/")
     }
 }

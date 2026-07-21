@@ -32,8 +32,8 @@ data class VideoMetadata(
   val audioCodec: String?,
   val videoCodec: String?,
   val fps: Float?,
-  val orientation: String,
-  val naturalOrientation: String,
+  val orientation: VideoOrientation,
+  val naturalOrientation: NaturalOrientation,
   val aspectRatio: Double?,
   val is16_9: Boolean,
   val location: VideoLocation?
@@ -99,9 +99,9 @@ class VideoMetadataReader(private val context: Context) {
         if (mimeType.startsWith("audio/")) {
           audioChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
           audioSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-          audioCodec = mapMimeTypeToCodecName(mimeType)
+          audioCodec = MediaMetadataUtils.mapMimeTypeToCodecName(mimeType)
         } else if (mimeType.startsWith("video/")) {
-          videoCodec = mapMimeTypeToCodecName(mimeType)
+          videoCodec = MediaMetadataUtils.mapMimeTypeToCodecName(mimeType)
           fps = try {
             format.getInteger(MediaFormat.KEY_FRAME_RATE).toFloat()
           } catch (_: Exception) {
@@ -113,7 +113,7 @@ class VideoMetadataReader(private val context: Context) {
       val aspectRatio = if (width != null && height != null && height != 0)
         width.toDouble() / height else null
       val is16_9 = aspectRatio?.let { abs(it - 16.0 / 9.0) < 0.01 } ?: false
-      val naturalOrientation = if (width != null && height != null && height > width) "Portrait" else "Landscape"
+      val naturalOrientation = if (width != null && height != null && height > width) NaturalOrientation.PORTRAIT else NaturalOrientation.LANDSCAPE
 
       return VideoMetadata(
         duration, width, height, bitrate, fileSize, hasAudio, isHDR,
@@ -129,49 +129,77 @@ class VideoMetadataReader(private val context: Context) {
     }
   }
 
-  private fun extractGPSLocation(retriever: MediaMetadataRetriever): VideoLocation? {
-    val raw = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION) ?: return null
-    val cleaned = raw.trim('+', '/')
-    val parts = cleaned.split("+")
-    if (parts.size >= 2) {
-      val lat = parts[0].toDoubleOrNull()
-      val lon = parts[1].toDoubleOrNull()
-      val alt = if (parts.size >= 3) parts[2].toDoubleOrNull() else null
-      if (lat != null && lon != null) return VideoLocation(lat, lon, alt)
+  /**
+   * Extracts a single representative video frame as a base64-encoded JPEG data URI.
+   *
+   * @param timeMs Time position (milliseconds) to grab the frame from. Defaults to the first frame.
+   */
+  fun getVideoThumbnail(source: String, headers: Map<String, String>? = null, timeMs: Long = 0L): String? {
+    val retriever = MediaMetadataRetriever()
+    try {
+      val uri = source.toUri()
+
+      when {
+        URLUtil.isFileUrl(source) -> {
+          val path = uri.path ?: return null
+          retriever.setDataSource(path)
+        }
+        URLUtil.isContentUrl(source) -> {
+          context.contentResolver.openFileDescriptor(uri, "r")?.use { fd ->
+            retriever.setDataSource(fd.fileDescriptor)
+          }
+        }
+        else -> {
+          retriever.setDataSource(source, headers ?: emptyMap())
+        }
+      }
+
+      val frame = retriever.getFrameAtTime(timeMs * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+        ?: return null
+      return MediaMetadataUtils.bitmapToJpegDataUri(frame)
+    } catch (e: Exception) {
+      Log.e("VideoMetadataReader", "Error extracting video thumbnail", e)
+      return null
+    } finally {
+      retriever.release()
     }
-    return null
   }
 
-  private fun getOrientation(rotation: Int?, width: Int?, height: Int?): String {
-    if (width == null || height == null || width == 0 || height == 0) return "LandscapeRight"
+  private fun extractGPSLocation(retriever: MediaMetadataRetriever): VideoLocation? {
+    val raw = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION) ?: return null
+    return parseISO6709(raw)
+  }
+
+  /**
+   * Parses an ISO6709 location string (e.g. "+37.5090-122.2364+000.000/") into lat/lon/altitude.
+   *
+   * The naive approach of stripping the leading sign and splitting on "+" only works when
+   * longitude happens to be positive. Since ISO6709 always prefixes every component (lat, lon,
+   * optional altitude) with an explicit "+" or "-" sign, we instead scan for all signed decimal
+   * numbers directly - this correctly handles all four lat/lon sign combinations. Mirrors
+   * `parseISO6709` in ios/VideoMetadata.swift.
+   */
+  private fun parseISO6709(raw: String): VideoLocation? {
+    val cleaned = raw.replace("/", "")
+    val regex = Regex("([+-]\\d+\\.\\d+)")
+    val coords = regex.findAll(cleaned).map { it.value.toDouble() }.toList()
+    if (coords.size < 2) return null
+    val lat = coords[0]
+    val lon = coords[1]
+    val alt = if (coords.size > 2) coords[2] else null
+    return VideoLocation(lat, lon, alt)
+  }
+
+  private fun getOrientation(rotation: Int?, width: Int?, height: Int?): VideoOrientation {
+    if (width == null || height == null || width == 0 || height == 0) return VideoOrientation.LANDSCAPERIGHT
     val isPortrait = height > width
     val normalized = ((rotation ?: 0) % 360 + 360) % 360
     return when (normalized) {
-      0 -> if (isPortrait) "Portrait" else "LandscapeRight"
-      90 -> "Portrait"
-      180 -> if (isPortrait) "PortraitUpsideDown" else "LandscapeLeft"
-      270 -> "PortraitUpsideDown"
-      else -> if (isPortrait) "Portrait" else "LandscapeRight"
+      0 -> if (isPortrait) VideoOrientation.PORTRAIT else VideoOrientation.LANDSCAPERIGHT
+      90 -> VideoOrientation.PORTRAIT
+      180 -> if (isPortrait) VideoOrientation.PORTRAITUPSIDEDOWN else VideoOrientation.LANDSCAPELEFT
+      270 -> VideoOrientation.PORTRAITUPSIDEDOWN
+      else -> if (isPortrait) VideoOrientation.PORTRAIT else VideoOrientation.LANDSCAPERIGHT
     }
-  }
-
-  private fun mapMimeTypeToCodecName(mime: String): String = when {
-    mime.startsWith("audio/") -> when {
-      mime.contains("mp4a-latm") -> "aac"
-      mime.contains("ac3") -> "ac3"
-      mime.contains("opus") -> "opus"
-      mime.contains("vorbis") -> "vorbis"
-      mime.contains("flac") -> "flac"
-      else -> mime.substringAfter("audio/")
-    }
-    mime.startsWith("video/") -> when {
-      mime.contains("avc") || mime.contains("h264") -> "avc1"
-      mime.contains("hev") || mime.contains("h265") -> "hev1"
-      mime.contains("vp9") -> "vp9"
-      mime.contains("vp8") -> "vp8"
-      mime.contains("mp4v-es") -> "mp4v"
-      else -> mime.substringAfter("video/")
-    }
-    else -> mime
   }
 }
