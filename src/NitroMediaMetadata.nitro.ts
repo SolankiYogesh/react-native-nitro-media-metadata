@@ -6,6 +6,27 @@ export type VideoLocationType = {
   altitude?: number;
 };
 
+/**
+ * Orientation of a video, taking into account both its natural dimensions AND any
+ * rotation/transform applied to it (e.g. recorded while holding the phone sideways).
+ */
+export type VideoOrientation =
+  | 'Portrait'
+  | 'PortraitUpsideDown'
+  | 'LandscapeLeft'
+  | 'LandscapeRight'
+  | 'Unknown';
+
+/**
+ * Natural orientation of a video/image, without any rotation/transform applied.
+ */
+export type NaturalOrientation = 'Portrait' | 'Landscape';
+
+/**
+ * Orientation of an image, derived from its effective (post-rotation) width/height.
+ */
+export type ImageOrientation = 'Landscape' | 'Portrait' | 'Square';
+
 export type VideoInfoResult = {
   /**
    * Duration of the video in seconds (float).
@@ -58,12 +79,12 @@ export type VideoInfoResult = {
    * - LandscapeRight: The video is in landscape mode, but rotated 90 degrees clockwise.
    * - LandscapeLeft: The video is in landscape mode, but rotated 90 degrees counter-clockwise.
    */
-  orientation: string;
+  orientation: VideoOrientation;
   /**
    * Natural orientation of the video.
    * This is the orientation of the video as it was recorded, without any rotation/transform applied.
    */
-  naturalOrientation: string;
+  naturalOrientation: NaturalOrientation;
   /**
    * Aspect ratio of the video.
    */
@@ -128,6 +149,11 @@ export type AudioInfoResult = {
    * Album name (if available).
    */
   album?: string;
+  /**
+   * Embedded cover art / album artwork (if available), as a base64-encoded data URI
+   * (e.g. `data:image/jpeg;base64,...`).
+   */
+  coverArt?: string;
 };
 
 export type ImageInfoResult = {
@@ -148,9 +174,12 @@ export type ImageInfoResult = {
    */
   format: string;
   /**
-   * Image orientation.
+   * Image orientation, derived from the effective (post-rotation) width/height:
+   * - Landscape: effective width > effective height.
+   * - Portrait: effective height > effective width.
+   * - Square: effective width === effective height.
    */
-  orientation: string;
+  orientation: ImageOrientation;
   /**
    * EXIF data (if available).
    */
@@ -168,10 +197,23 @@ export type MediaInfoOptions = {
   headers?: Record<string, string>;
 };
 
-export interface NitroMediaMetadata extends HybridObject<{
-  ios: 'swift';
-  android: 'kotlin';
-}> {
+export type VideoThumbnailOptions = {
+  /**
+   * In case `sourceFilename` is a remote URI, `headers` object is passed in a network request.
+   */
+  headers?: Record<string, string>;
+  /**
+   * Time position (in milliseconds) to extract the thumbnail frame from.
+   * Defaults to the first frame (0ms).
+   */
+  timeMs?: number;
+};
+
+export interface NitroMediaMetadata
+  extends HybridObject<{
+    ios: 'swift';
+    android: 'kotlin';
+  }> {
   getVideoInfoAsync(
     source: string,
     options: MediaInfoOptions
@@ -184,4 +226,13 @@ export interface NitroMediaMetadata extends HybridObject<{
     source: string,
     options: MediaInfoOptions
   ): Promise<ImageInfoResult>;
+  /**
+   * Extracts a single representative frame from the video as a base64-encoded
+   * JPEG data URI (e.g. `data:image/jpeg;base64,...`), or `null` if a frame
+   * could not be extracted.
+   */
+  getVideoThumbnailAsync(
+    source: string,
+    options: VideoThumbnailOptions
+  ): Promise<string | null>;
 }

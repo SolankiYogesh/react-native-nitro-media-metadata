@@ -5,6 +5,7 @@ import type {
   MediaInfoOptions,
   NitroMediaMetadata,
   VideoInfoResult,
+  VideoThumbnailOptions,
 } from './NitroMediaMetadata.nitro';
 
 const NitroMediaMetadataHybridObject =
@@ -39,3 +40,25 @@ export function getImageInfoAsync(
     options ?? {}
   );
 }
+
+export function getVideoThumbnailAsync(
+  source: string,
+  options?: VideoThumbnailOptions
+): Promise<string | null> {
+  return NitroMediaMetadataHybridObject.getVideoThumbnailAsync(
+    source,
+    options ?? {}
+  );
+}
+
+export type {
+  AudioInfoResult,
+  ImageInfoResult,
+  ImageOrientation,
+  MediaInfoOptions,
+  NaturalOrientation,
+  VideoInfoResult,
+  VideoLocationType,
+  VideoOrientation,
+  VideoThumbnailOptions,
+} from './NitroMediaMetadata.nitro';
