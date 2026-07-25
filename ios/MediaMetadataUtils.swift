@@ -53,14 +53,8 @@ public class MediaMetadataUtils {
   static func imageFormat(from imageSource: CGImageSource) -> String {
     guard let uti = CGImageSourceGetType(imageSource) as String? else { return "" }
 
-    if #available(iOS 14.0, *) {
-      if let type = UTType(uti), let mime = type.preferredMIMEType {
-        return mime.replacingOccurrences(of: "image/", with: "")
-      }
-    }
-
-    if let mimeType = UTTypeCopyPreferredTagWithClass(uti as CFString, kUTTagClassMIMEType)?.takeRetainedValue() as String? {
-      return mimeType.replacingOccurrences(of: "image/", with: "")
+    if let type = UTType(uti), let mime = type.preferredMIMEType {
+      return mime.replacingOccurrences(of: "image/", with: "")
     }
 
     return ""
