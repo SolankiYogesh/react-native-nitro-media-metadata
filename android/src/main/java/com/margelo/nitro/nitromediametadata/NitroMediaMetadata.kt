@@ -1,6 +1,7 @@
 package com.margelo.nitro.nitromediametadata
 
 import com.margelo.nitro.NitroModules
+import com.margelo.nitro.core.NullType
 import com.margelo.nitro.core.Promise
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +36,8 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec() {
         val result = VideoInfoResult(
           duration = meta.duration,
           hasAudio = meta.hasAudio,
-          isHDR = meta.isHDR,
+          isHDR = meta.isHDR?.let { Variant_Boolean_NullType.create(it) }
+            ?: Variant_Boolean_NullType.create(NullType.NULL),
           width = (meta.width ?: 0).toDouble(),
           height = (meta.height ?: 0).toDouble(),
           fps = (meta.fps ?: 0f).toDouble(),
@@ -50,12 +52,14 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec() {
           audioChannels = (meta.audioChannels ?: 0).toDouble(),
           audioCodec = meta.audioCodec ?: "",
           location = meta.location?.let {
-            VideoLocationType(
-              latitude = it.latitude,
-              longitude = it.longitude,
-              altitude = it.altitude
+            Variant_NullType_VideoLocationType.create(
+              VideoLocationType(
+                latitude = it.latitude,
+                longitude = it.longitude,
+                altitude = it.altitude
+              )
             )
-          }
+          } ?: Variant_NullType_VideoLocationType.create(NullType.NULL)
         )
 
         CoroutineScope(Dispatchers.Main).launch {
@@ -153,10 +157,12 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec() {
           orientation = meta.orientation,
           exif = meta.exif,
           location = meta.location?.let {
-            VideoLocationType(
-              latitude = it.latitude,
-              longitude = it.longitude,
-              altitude = it.altitude
+            Variant_NullType_VideoLocationType.create(
+              VideoLocationType(
+                latitude = it.latitude,
+                longitude = it.longitude,
+                altitude = it.altitude
+              )
             )
           }
         )
@@ -177,8 +183,8 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec() {
   override fun getVideoThumbnailAsync(
     source: String,
     options: VideoThumbnailOptions
-  ): Promise<String?> {
-    val promise = Promise<String?>()
+  ): Promise<Variant_NullType_String> {
+    val promise = Promise<Variant_NullType_String>()
 
     CoroutineScope(Dispatchers.IO).launch {
       try {
@@ -196,8 +202,11 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec() {
           (options.timeMs ?: 0.0).toLong()
         )
 
+        val result = thumbnail?.let { Variant_NullType_String.create(it) }
+          ?: Variant_NullType_String.create(NullType.NULL)
+
         CoroutineScope(Dispatchers.Main).launch {
-          promise.resolve(thumbnail)
+          promise.resolve(result)
         }
       } catch (e: Exception) {
         CoroutineScope(Dispatchers.Main).launch {

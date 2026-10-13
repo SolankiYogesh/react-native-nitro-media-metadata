@@ -105,8 +105,8 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
     return promise
   }
 
-  func getVideoThumbnailAsync(source: String, options: VideoThumbnailOptions) throws -> Promise<String?> {
-    let promise = Promise<String?>()
+  func getVideoThumbnailAsync(source: String, options: VideoThumbnailOptions) throws -> Promise<Variant_NullType_String> {
+    let promise = Promise<Variant_NullType_String>()
     let url = resolveURL(source)
 
     guard let url = url else {
@@ -127,7 +127,8 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
             options: VideoMetadata.Options(headers: options.headers ?? [:]),
             timeMs: doubleValue(options.timeMs)
           )
-          promise.resolve(withResult: thumbnail)
+          let result: Variant_NullType_String = thumbnail.map { .second($0) } ?? .first(.null)
+          promise.resolve(withResult: result)
         } catch {
           promise.reject(withError: MediaMetadataError(message: "Failed to extract video thumbnail: \(error.localizedDescription)"))
         }
@@ -158,7 +159,7 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
     return VideoInfoResult(
       duration: doubleValue(infoDict["duration"]),
       hasAudio: infoDict["hasAudio"] as? Bool ?? false,
-      isHDR: infoDict["isHDR"] as? Bool ?? false,
+      isHDR: (infoDict["isHDR"] as? Bool).map { .first($0) } ?? .second(.null),
       width: doubleValue(infoDict["width"]),
       height: doubleValue(infoDict["height"]),
       fps: doubleValue(infoDict["fps"]),
@@ -174,13 +175,13 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
       audioCodec: infoDict["audioCodec"] as? String ?? "",
       location: {
         if let loc = infoDict["location"] as? [String: Double] {
-          return VideoLocationType(
+          return .second(VideoLocationType(
             latitude: loc["latitude"] ?? 0,
             longitude: loc["longitude"] ?? 0,
             altitude: loc["altitude"]
-          )
+          ))
         }
-        return nil
+        return .first(.null)
       }()
     )
   }
@@ -210,11 +211,11 @@ class NitroMediaMetadata: HybridNitroMediaMetadataSpec {
       exif: infoDict["exif"] as? [String: String],
       location: {
         if let loc = infoDict["location"] as? [String: Double] {
-          return VideoLocationType(
+          return .second(VideoLocationType(
             latitude: loc["latitude"] ?? 0,
             longitude: loc["longitude"] ?? 0,
             altitude: loc["altitude"]
-          )
+          ))
         }
         return nil
       }()
