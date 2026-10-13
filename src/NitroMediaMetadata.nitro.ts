@@ -209,11 +209,10 @@ export type VideoThumbnailOptions = {
   timeMs?: number;
 };
 
-export interface NitroMediaMetadata
-  extends HybridObject<{
-    ios: 'swift';
-    android: 'kotlin';
-  }> {
+export interface NitroMediaMetadata extends HybridObject<{
+  ios: 'swift';
+  android: 'kotlin';
+}> {
   getVideoInfoAsync(
     source: string,
     options: MediaInfoOptions

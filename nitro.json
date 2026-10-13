@@ -9,8 +9,8 @@
   },
   "autolinking": {
     "NitroMediaMetadata": {
-      "swift": "NitroMediaMetadata",
-      "kotlin": "NitroMediaMetadata"
+      "ios": { "language": "swift", "implementationClassName": "NitroMediaMetadata" },
+      "android": { "language": "kotlin", "implementationClassName": "NitroMediaMetadata" }
     }
   },
   "ignorePaths": ["node_modules"]
